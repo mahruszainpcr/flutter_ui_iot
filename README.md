@@ -1,4 +1,4 @@
-# masjid
+# Flutter UI for Smart Home IOT
 
 A new Flutter project.
 
