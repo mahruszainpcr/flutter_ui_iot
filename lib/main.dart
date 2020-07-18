@@ -1,517 +1,224 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:masjid/ThermometerWidget.dart';
+import 'package:mqtt_client/mqtt_client.dart' as mqtt;
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.orange,
       ),
-      home: MyHomePage(),
+      home: MyHomePage(title: 'IoT Lab 320 PCR'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
+  MyHomePage({Key key, this.title}) : super(key: key);
+
+  final String title;
+
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  double _temp = 0;
+  void koneksi() async {
+    // Create a new UniversalMqttClient. This does not start the connection yet.
+    final client =
+        UniversalMqttClient(broker: Uri.parse('tcp://103.19.208.238:9001'));
+    client.status.listen((status) {
+      print('Connection Status: $status');
+    });
+
+    // We now call `client.connect()` to establish a connection with the MQTT broker.
+    // The returned promise resolves when the connection is successful, a timeout
+    // has been reached, or the broker responds with an error.
+    await client.connect();
+
+    // We now subscribe to the client and save the returned StreamSubscription
+
+    client
+        .handleString('building/s_lampu', MqttQos.atLeastOnce)
+        .listen((message) => setState(() {
+              _temp = double.parse(message);
+            }));
+    client
+        .handleString('building/suhu', MqttQos.atLeastOnce)
+        .listen((message) => setState(() {
+              _temp = double.parse(message);
+            }));
+    client
+        .handleString('building/humidity', MqttQos.atLeastOnce)
+        .listen((message) => setState(() {
+              _temp = double.parse(message);
+            }));
+    client
+        .handleString('building/light', MqttQos.atLeastOnce)
+        .listen((message) => setState(() {
+              _temp = double.parse(message);
+            }));
+
+    await Future.delayed(Duration(seconds: 2));
+  }
+
   @override
   Widget build(BuildContext context) {
+    koneksi();
     return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          bodyContent,
-          Positioned(left: 0, right: 0, bottom: 0, child: bottomNavigationBar)
-        ],
+      appBar: AppBar(
+        title: Text(widget.title),
       ),
-    );
-  }
-
-  Widget get bodyContent {
-    return SingleChildScrollView(
-      child: Container(
-          color: Colors.white,
-          child: Column(
-            children: <Widget>[
-              Header(),
-              SizedBox(
-                height: 16,
-              ),
-              Informasi(),
-              Menu(),
-              Menu2(),
-              Menu3(),
-              SizedBox(
-                height: 70,
-              )
-            ],
-          )),
-    );
-  }
-
-  Widget get bottomNavigationBar {
-    return Container(
-        width: double.infinity,
-        height: 60,
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(40), topRight: Radius.circular(40)),
-          child: Container(
-            color: Colors.blue[300],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                      color: Colors.black26,
-                      borderRadius: BorderRadius.all(Radius.circular(20))),
-                  child: Row(
-                    children: <Widget>[
-                      Icon(
-                        Icons.home,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      Text(
-                        "Home",
-                        style: TextStyle(color: Colors.white),
-                      )
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.lightbulb_outline,
-                  color: Colors.white,
-                  size: 30,
-                ),
-                Icon(
-                  Icons.remove_from_queue,
-                  color: Colors.white,
-                  size: 30,
-                ),
-                Icon(
-                  Icons.hot_tub,
-                  color: Colors.white,
-                  size: 30,
-                )
-              ],
-            ),
-          ),
-        ) // This trailing comma makes auto-formatting nicer for build methods.
-        );
-  }
-}
-
-class Menu extends StatelessWidget {
-  const Menu({
-    Key key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
+      body: Center(
         child: Column(
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  height: 120,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                      color: Colors.blue[300],
-                      border: Border.all(color: Colors.black12),
-                      borderRadius: BorderRadius.all(Radius.circular(16))),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                          child: Image.asset(
-                        "images/ac.png",
-                        width: 50,
-                      )),
-                      Container(
-                          child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            "AC",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "5 device",
-                            style: TextStyle(fontSize: 12, color: Colors.black),
-                          )
-                        ],
-                      ))
-                    ],
-                  ),
-                ),
+          children: [
+            SizedBox(
+              height: 16,
+            ),
+            Container(
+              padding: EdgeInsets.all(8),
+              margin: EdgeInsets.all(16),
+              height: 40,
+              width: double.infinity,
+              decoration: BoxDecoration(color: Colors.orangeAccent[200]),
+              child: Text(
+                "Ruangan 320",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 20),
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  height: 120,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black12),
-                      borderRadius: BorderRadius.all(Radius.circular(16))),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                          child: Image.asset(
-                        "images/lampu.png",
-                        width: 50,
-                      )),
-                      Container(
-                          child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            "Lampu",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+            Container(
+              padding: EdgeInsets.all(16),
+              height: 100,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Expanded(
+                      flex: 1,
+                      child: Container(
+                        child: Column(
+                          children: [
+                            Text("Suhu"),
+                            SizedBox(
+                              height: 8,
                             ),
-                          ),
-                          Text(
-                            "1 device",
-                            style: TextStyle(fontSize: 12, color: Colors.black),
-                          )
-                        ],
-                      ))
-                    ],
-                  ),
-                ),
+                            Text(
+                              "36 C",
+                              style: TextStyle(
+                                  fontSize: 30, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      )),
+                  Expanded(
+                      flex: 1,
+                      child: Container(
+                        child: Column(
+                          children: [
+                            Text("Cahaya"),
+                            SizedBox(
+                              height: 8,
+                            ),
+                            Text(
+                              "80",
+                              style: TextStyle(
+                                  fontSize: 30, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      )),
+                  Expanded(
+                      flex: 1,
+                      child: Container(
+                        child: Column(
+                          children: [
+                            Text("Humidity"),
+                            SizedBox(
+                              height: 8,
+                            ),
+                            Text(
+                              "89",
+                              style: TextStyle(
+                                  fontSize: 30, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      )),
+                ],
               ),
-            )
+            ),
+            statusLampu(_temp.toString()),
+            SizedBox(
+              height: 16,
+            ),
+            SizedBox(
+              height: 16,
+            ),
+            OutlineButton(
+              onPressed: () => {_pubKirim()},
+              child: statusButton(_temp.toString()),
+            ),
           ],
-        )
-      ],
-    ));
-  }
-}
-
-class Menu2 extends StatelessWidget {
-  const Menu2({
-    Key key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-        child: Column(
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  height: 120,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black12),
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                          child: Image.asset(
-                        "images/meja_kerja.png",
-                        width: 50,
-                      )),
-                      Container(
-                          child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            "Ruang Kerja",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "1 device",
-                            style: TextStyle(fontSize: 12, color: Colors.black),
-                          )
-                        ],
-                      ))
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  height: 120,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black12),
-                      borderRadius: BorderRadius.all(Radius.circular(16))),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                          child: Image.asset(
-                        "images/ruang_tamu.png",
-                        width: 50,
-                      )),
-                      Container(
-                          child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            "Ruang Keluarga",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "1 device",
-                            style: TextStyle(fontSize: 12, color: Colors.black),
-                          )
-                        ],
-                      ))
-                    ],
-                  ),
-                ),
-              ),
-            )
-          ],
-        )
-      ],
-    ));
-  }
-}
-
-class Menu3 extends StatelessWidget {
-  const Menu3({
-    Key key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-        child: Column(
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  height: 120,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black12),
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                          child: Image.asset(
-                        "images/mesin_cuci.png",
-                        width: 50,
-                      )),
-                      Container(
-                          child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            "Mesin Cuci",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "1 device",
-                            style: TextStyle(fontSize: 12, color: Colors.black),
-                          )
-                        ],
-                      ))
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  height: 120,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black12),
-                      borderRadius: BorderRadius.all(Radius.circular(16))),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                          child: Image.asset(
-                        "images/meja_makan.png",
-                        width: 50,
-                      )),
-                      Container(
-                          child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            "Ruang Makan",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "1 device",
-                            style: TextStyle(fontSize: 12, color: Colors.black),
-                          )
-                        ],
-                      ))
-                    ],
-                  ),
-                ),
-              ),
-            )
-          ],
-        )
-      ],
-    ));
-  }
-}
-
-class Informasi extends StatelessWidget {
-  const Informasi({
-    Key key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Row(
-        children: <Widget>[
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.black12),
-            ),
-            child: Icon(
-              Icons.lightbulb_outline,
-              size: 30,
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.only(left: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: <Widget>[
-                    Text("20.3", style: Theme.of(context).textTheme.display3),
-                    Text(" kwh", style: Theme.of(context).textTheme.body1),
-                  ],
-                ),
-                Container(
-                  child: Text(
-                    "Power usage for today",
-                    style: TextStyle(fontSize: 12, color: Colors.black38),
-                  ),
-                )
-              ],
-            ),
-          )
-        ],
+        ),
       ),
+      // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
-}
 
-class Header extends StatelessWidget {
-  const Header({
-    Key key,
-  }) : super(key: key);
+  Text statusButton(String status) {
+    if (status == "1.0") {
+      return Text("Matikan lampu");
+    } else {
+      return Text("Nyalakan lampu");
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Container(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      "Welcome home",
-                      style: TextStyle(fontSize: 12, color: Colors.black38),
-                    ),
-                    Text(
-                      "Mahrus Zain",
-                      style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                )),
-            flex: 4,
-          ),
-          Container(
-            margin: EdgeInsets.all(16),
-            padding: EdgeInsets.all(8),
-            decoration:
-                BoxDecoration(color: Colors.blue[300], shape: BoxShape.circle),
-            child: Icon(
-              Icons.person,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
+  Container statusLampu(String status) {
+    // print(status);
+    if (status == "1.0") {
+      return Container(
+        child: Icon(
+          Icons.lightbulb_outline,
+          size: 100,
+          color: Colors.orange,
+        ),
+      );
+    } else {
+      return Container(
+        child: Icon(
+          Icons.lightbulb_outline,
+          size: 100,
+          color: Colors.black,
+        ),
+      );
+    }
+  }
+
+  void _pubKirim() async {
+    // Create a new UniversalMqttClient. This does not start the connection yet.
+    final client =
+        UniversalMqttClient(broker: Uri.parse('tcp://103.19.208.238:9001'));
+    client.status.listen((status) {
+      print('Connection Status: $status');
+    });
+
+    // We now call `client.connect()` to establish a connection with the MQTT broker.
+    // The returned promise resolves when the connection is successful, a timeout
+    // has been reached, or the broker responds with an error.
+    await client.connect();
+
+    client.publishString('building/lampu', 'off', MqttQos.atLeastOnce);
+
+    // Then we wait a bit before we cancel our subscription.
+    await Future.delayed(Duration(seconds: 2));
   }
 }
